@@ -1,0 +1,27 @@
+# Build output
+target/
+out/
+build/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Maven wrapper logs / release files
+.mvn/wrapper/maven-wrapper.jar
+release.properties
+
+# Local environment & secrets
+.env
+.env.local
+*.env
+
+# Runtime file storage (uploaded evidence, generated PDFs)
+storage/
+
+# OS / editor noise
+.DS_Store
+*.swp
+*~
