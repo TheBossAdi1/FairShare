@@ -1,7 +1,6 @@
 package com.fairshare.app;
 
-public class User {
-
+public class User implements Storable {
     private final long id;
     private final String fullName;
     private final String email;
@@ -28,4 +27,14 @@ public class User {
     public String toString() {
         return "User{id=" + id + ", name=" + fullName + ", email=" + email + "}";
     }
+    @Override
+    public String toCsvLine() {
+        return id + "," + fullName + "," + email;
+    }
+
+    public static User fromCsvLine(String line) {
+        String[] parts = line.split(",", -1);
+        return new User(Long.parseLong(parts[0]), parts[1], parts[2]);
+    }
+
 }
