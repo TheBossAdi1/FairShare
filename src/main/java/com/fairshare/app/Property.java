@@ -3,7 +3,7 @@ package com.fairshare.app;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Property {
+public class Property implements Storable{
 
     private final long id;
     private final long landlordId;
@@ -47,4 +47,15 @@ public class Property {
         return "Property{id=" + id + ", name=" + name + ", city=" + city
                 + ", spaces=" + spaces.size() + "}";
     }
+
+    @Override
+    public String toCsvLine() {
+        return id + "," + landlordId + "," + name + "," + city;
+    }
+
+    public static Property fromCsvLine(String line) {
+        String[] parts = line.split(",", -1);
+        return new Property(Long.parseLong(parts[0]), Long.parseLong(parts[1]), parts[2], parts[3]);
+    }
+
 }

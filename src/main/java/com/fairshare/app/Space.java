@@ -1,6 +1,6 @@
 package com.fairshare.app;
 
-public class Space {
+public class Space implements Storable {
 
     private final long id;
     private final String name;
@@ -28,4 +28,14 @@ public class Space {
     public String toString() {
         return "Space{id=" + id + ", name=" + name + ", type=" + type + "}";
     }
+    @Override
+    public String toCsvLine() {
+        return id + "," + name + "," + type;
+    }
+
+    public static Space fromCsvLine(String line) {
+        String[] parts = line.split(",", -1);
+        return new Space(Long.parseLong(parts[0]), parts[1], SpaceType.valueOf(parts[2]));
+    }
+
 }

@@ -3,7 +3,7 @@ package com.fairshare.app;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class Tenancy {
+public class Tenancy implements Storable{
 
     private final long id;
     private final long tenantId;
@@ -68,4 +68,20 @@ public class Tenancy {
                 + ", " + startDate + " to " + endDate + ", rent=" + monthlyRent
                 + ", deposit=" + agreedDeposit + ", status=" + status + "}";
     }
+
+    @Override
+    public String toCsvLine() {
+        return id + "," + tenantId + "," + spaceId + "," + startDate + "," + endDate
+                + "," + monthlyRent + "," + agreedDeposit + "," + status;
+    }
+
+    public static Tenancy fromCsvLine(String line) {
+        String[] parts = line.split(",", -1);
+        Tenancy tenancy = new Tenancy(Long.parseLong(parts[0]), Long.parseLong(parts[1]),
+                Long.parseLong(parts[2]), LocalDate.parse(parts[3]), LocalDate.parse(parts[4]),
+                new BigDecimal(parts[5]), new BigDecimal(parts[6]));
+        tenancy.setStatus(TenancyStatus.valueOf(parts[7]));   // restore the saved status
+        return tenancy;
+    }
+
 }

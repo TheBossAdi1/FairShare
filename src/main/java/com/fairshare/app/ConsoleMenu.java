@@ -171,15 +171,18 @@ public class ConsoleMenu {
     }
 
     // ---------- input helpers: each repeats until the answer is valid ----------
-
+    
     private String readText(String prompt) {
         while (true) {
             System.out.print(prompt);
             String line = scanner.nextLine().trim();
-            if (!line.isEmpty()) {
+            if (line.isEmpty()) {
+                System.out.println("This cannot be empty.");
+            } else if (line.contains(",")) {
+                System.out.println("Commas are not allowed (they separate fields in the data file).");
+            } else {
                 return line;
             }
-            System.out.println("This cannot be empty.");
         }
     }
 

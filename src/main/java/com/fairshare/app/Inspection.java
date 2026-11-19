@@ -2,8 +2,7 @@ package com.fairshare.app;
 
 import java.time.LocalDate;
 
-public class Inspection implements Reviewable {
-
+public class Inspection implements Reviewable, Storable {
     private final long id;
     private final long spaceId;
     private final InspectionType type;
@@ -61,4 +60,24 @@ public class Inspection implements Reviewable {
         return "Inspection{id=" + id + ", spaceId=" + spaceId + ", type=" + type
                 + ", date=" + date + ", review=" + reviewStatus + "}";
     }
+
+
+    @Override
+    public String toCsvLine() {
+        return id + "," + spaceId + "," + type + "," + date + "," + reviewStatus + "," + reviewComment;
+    }
+
+    public static Inspection fromCsvLine(String line) {
+        String[] parts = line.split(",", -1);
+        Inspection inspection = new Inspection(Long.parseLong(parts[0]), Long.parseLong(parts[1]),
+                InspectionType.valueOf(parts[2]), LocalDate.parse(parts[3]));
+        ReviewStatus status = ReviewStatus.valueOf(parts[4]);
+        if (status == ReviewStatus.ACKNOWLEDGED) {
+            inspection.acknowledge();
+        } else if (status == ReviewStatus.DISPUTED) {
+            inspection.dispute(parts[5]);
+        }
+        return inspection;
+    }
+
 }

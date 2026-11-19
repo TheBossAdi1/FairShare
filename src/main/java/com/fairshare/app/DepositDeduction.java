@@ -2,7 +2,7 @@ package com.fairshare.app;
 
 import java.math.BigDecimal;
 
-public class DepositDeduction implements Reviewable {
+public class DepositDeduction implements Reviewable, Storable {
 
     private final long id;
     private final long tenancyId;
@@ -76,4 +76,26 @@ public class DepositDeduction implements Reviewable {
         return "DepositDeduction{id=" + id + ", tenancyId=" + tenancyId + ", amount=" + amount
                 + ", reason=" + reason + ", status=" + status + "}";
     }
+
+    @Override
+    public String toCsvLine() {
+        return id + "," + tenancyId + "," + amount + "," + reason + "," + status + "," + tenantComment;
+    }
+
+    public static DepositDeduction fromCsvLine(String line) {
+        String[] parts = line.split(",", -1);
+        DepositDeduction deduction = new DepositDeduction(Long.parseLong(parts[0]),
+                Long.parseLong(parts[1]), new BigDecimal(parts[2]), parts[3]);
+        DeductionStatus status = DeductionStatus.valueOf(parts[4]);
+        if (status == DeductionStatus.ACCEPTED) {
+            deduction.acknowledge();
+        } else if (status == DeductionStatus.DISPUTED) {
+            deduction.dispute(parts[5]);
+        } else if (status == DeductionStatus.REJECTED) {
+            deduction.dispute(parts[5]);   // restores the comment first
+            deduction.reject();
+        }
+        return deduction;
+    }
+
 }
