@@ -8,10 +8,12 @@ import java.util.Scanner;
 public class ConsoleMenu {
 
     private final FairShareRegistry registry;
+    private final String currency;   // from the configuration, shown in money prompts
     private final Scanner scanner = new Scanner(System.in);
 
-    public ConsoleMenu(FairShareRegistry registry) {
+    public ConsoleMenu(FairShareRegistry registry, String currency) {
         this.registry = registry;
+        this.currency = currency;
     }
 
     // ---------- main loop ----------
@@ -113,8 +115,8 @@ public class ConsoleMenu {
             System.out.println("End date must be after the start date.");
             return;
         }
-        BigDecimal rent = readPositiveMoney("Monthly rent: ");
-        BigDecimal deposit = readPositiveMoney("Agreed deposit: ");
+        BigDecimal rent = readPositiveMoney("Monthly rent (" + currency + "): ");
+        BigDecimal deposit = readPositiveMoney("Agreed deposit (" + currency + "): ");
         Tenancy tenancy = new Tenancy(registry.generateId(), tenantId, spaceId,
                 start, end, rent, deposit);
         try {
@@ -145,7 +147,7 @@ public class ConsoleMenu {
             System.out.println("No tenancy with that id.");
             return;
         }
-        BigDecimal amount = readPositiveMoney("Deduction amount: ");
+        BigDecimal amount = readPositiveMoney("Deduction amount (" + currency + "): ");
         String reason = readText("Reason: ");
         DepositDeduction deduction = new DepositDeduction(registry.generateId(),
                 tenancyId, amount, reason);
