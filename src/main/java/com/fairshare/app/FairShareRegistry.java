@@ -169,7 +169,6 @@ public class FairShareRegistry {
     public List<DepositDeduction> getDeductions() {
         return deductions;
     }
-}
     // sum of ACCEPTED deductions of one tenancy (PROPOSED ones never count)
     public BigDecimal getAcceptedTotal(long tenancyId) {
         BigDecimal total = BigDecimal.ZERO;
@@ -196,3 +195,4 @@ public class FairShareRegistry {
         deduction.acknowledge();
     }
 
+}

@@ -38,7 +38,7 @@ public class ConsoleMenu {
                 listAll();
             } else if (choice == 8) {
                 respondToDeduction();
-            else {
+            } else {
                 running = false;
             }
         }
