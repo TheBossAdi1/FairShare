@@ -25,7 +25,7 @@ public class ConsoleMenu {
         boolean running = true;
         while (running) {
             printMenu();
-            int choice = readInt("Choose an option: ", 0, 8);
+            int choice = readInt("Choose an option: ", 0, 11);
             if (choice == 1) {
                 addUser();
             } else if (choice == 2) {
@@ -43,6 +43,12 @@ public class ConsoleMenu {
                 listAll();
             } else if (choice == 8) {
                 respondToDeduction();
+            } else if (choice == 9) {
+                respondToInspection();
+            } else if (choice == 10) {
+                rejectDeduction();
+            } else if (choice == 11) {
+                changeTenancyStatus();
             } else {
                 running = false;
             }
@@ -61,6 +67,9 @@ public class ConsoleMenu {
         System.out.println("6) Propose deposit deduction");
         System.out.println("7) List everything");
         System.out.println("8) Answer a deduction (accept / dispute)");
+        System.out.println("9) Answer an inspection (acknowledge / dispute)");
+        System.out.println("10) Reject a proposed deduction (landlord)");
+        System.out.println("11) Change a tenancy status");
         System.out.println("0) Exit");
     }
 
@@ -192,6 +201,76 @@ public class ConsoleMenu {
     }
 
 
+    private void respondToInspection() {
+        long id = readLong("Inspection id: ");
+        Inspection inspection = registry.findInspectionById(id);
+        if (inspection == null) {
+            System.out.println("No inspection with that id.");
+            return;
+        }
+        if (inspection.getReviewStatus() != ReviewStatus.PENDING) {
+            System.out.println("Only PENDING inspections can be answered. This one is "
+                    + inspection.getReviewStatus() + ".");
+            return;
+        }
+        System.out.println("1) Acknowledge");
+        System.out.println("2) Dispute");
+        int choice = readInt("Answer: ", 1, 2);
+        if (choice == 1) {
+            inspection.acknowledge();
+            System.out.println("Acknowledged: " + inspection);
+        } else {
+            String comment = readText("Comment: ");
+            inspection.dispute(comment);
+            System.out.println("Disputed: " + inspection);
+        }
+    }
+
+    // the landlord withdraws a deduction that is still only PROPOSED
+    private void rejectDeduction() {
+        long id = readLong("Deduction id: ");
+        DepositDeduction deduction = registry.findDeductionById(id);
+        if (deduction == null) {
+            System.out.println("No deduction with that id.");
+            return;
+        }
+        if (deduction.getStatus() != DeductionStatus.PROPOSED) {
+            System.out.println("Only PROPOSED deductions can be rejected. This one is "
+                    + deduction.getStatus() + ".");
+            return;
+        }
+        deduction.reject();
+        System.out.println("Rejected: " + deduction);
+    }
+
+    // PENDING, ACTIVE or ENDED. An ENDED tenancy is final: it cannot be reopened,
+    // otherwise it could come back and overlap a newer tenancy of the same room.
+    private void changeTenancyStatus() {
+        long id = readLong("Tenancy id: ");
+        Tenancy tenancy = registry.findTenancyById(id);
+        if (tenancy == null) {
+            System.out.println("No tenancy with that id.");
+            return;
+        }
+        if (tenancy.getStatus() == TenancyStatus.ENDED) {
+            System.out.println("This tenancy is ENDED and cannot be changed.");
+            return;
+        }
+        System.out.println("Current status: " + tenancy.getStatus());
+        TenancyStatus newStatus = readTenancyStatus();
+        if (newStatus == tenancy.getStatus()) {
+            System.out.println("The tenancy already has that status.");
+            return;
+        }
+        tenancy.setStatus(newStatus);
+        System.out.println("Updated: " + tenancy);
+    }
+
+    // works for ANY Reviewable (inspection or deduction): only the interface is used
+    private void printReview(Reviewable item) {
+        System.out.println("    review status: " + item.getReviewStatus());
+    }
+
     private void listAll() {
         System.out.println("--- Users ---");
         for (User u : registry.getUsers()) {
@@ -211,10 +290,12 @@ public class ConsoleMenu {
         System.out.println("--- Inspections ---");
         for (Inspection i : registry.getInspections()) {
             System.out.println(i);
+            printReview(i);
         }
         System.out.println("--- Deductions ---");
         for (DepositDeduction d : registry.getDeductions()) {
             System.out.println(d);
+            printReview(d);
         }
     }
 
@@ -317,6 +398,14 @@ public class ConsoleMenu {
         System.out.println("2) SHARED_AREA");
         int choice = readInt("Space type: ", 1, 2);
         return SpaceType.values()[choice - 1];   // values() = array of all enum constants
+    }
+
+    private TenancyStatus readTenancyStatus() {
+        System.out.println("1) PENDING");
+        System.out.println("2) ACTIVE");
+        System.out.println("3) ENDED");
+        int choice = readInt("New status: ", 1, 3);
+        return TenancyStatus.values()[choice - 1];
     }
 
     private InspectionType readInspectionType() {

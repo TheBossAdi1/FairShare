@@ -25,3 +25,7 @@ storage/
 .DS_Store
 *.swp
 *~
+
+# Runtime data files and notes (not committed)
+data/
+README.md

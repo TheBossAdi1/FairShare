@@ -12,7 +12,7 @@
 - Support classes: FairShareRegistry (data and rules), FairShareFileStore (files), ConsoleMenu (input/output), AppConfig (settings).
 
 **3. Interfaces and collections**
-- Reviewable: acknowledge(), dispute(comment), getReviewStatus(). Implemented by Inspection and DepositDeduction.
+- Reviewable: acknowledge(), dispute(comment), getReviewStatus(). Implemented by Inspection and DepositDeduction. One menu method, printReview(Reviewable), prints the status of either kind: this is the interface paying off.
 - Storable: toCsvLine(). Implemented by all six domain classes.
 - Collections: Map<Long, User> (find a user by id), List<Property> with List<Space> inside, Lists of Tenancy, Inspection, DepositDeduction.
 
@@ -27,16 +27,35 @@
 - Every menu input is validated and asked again until valid.
 
 **6. Live demo and next steps**
-- Demo (3 minutes, script below).
+- Demo (4 minutes, script below).
 - Next: web version with Spring Boot, PostgreSQL, login, inspection items, settlement.
 
-## Demo script (3 minutes)
-1. Start the app. Add user "Ana Pop" with a wrong email first (ana@mail), then ana@mail.com.
-2. Add a property for landlord 1, then a PRIVATE_ROOM space.
-3. Add tenancy 2026-01-01 to 2026-06-30, rent 300, deposit 500.
-4. Add a second tenancy 2026-05-01 to 2026-09-01. It is rejected as overlapping.
-5. Propose deductions 300, 300 and 200. Accept the first, then the second (rejected: 600 > 500), then the third (500 = 500, allowed).
-6. Exit with 0, open data/users.csv to show the file, start again and list everything with option 7.
+## Demo script (4 minutes)
+Start with an empty data folder (delete data/ before the presentation). Ids come from ONE counter shared by all object types, so they follow the order below. A rejected tenancy still uses up an id, so the inspection gets 6, not 5.
+
+| Step | Menu option and input | What you should see |
+|---|---|---|
+| 1 | `1`, name `Ana Pop`, email `ana@mail` | rejected: not a valid email, asks again |
+| 2 | same question, email `ana@mail.com` | User id **1** |
+| 3 | `2`, landlord id `1`, `Flat Central`, `Cluj` | Property id **2** |
+| 4 | `3`, property id `2`, `Room A`, type `1` (PRIVATE_ROOM) | Space id **3** |
+| 5 | `4`, tenant `1`, space `3`, `2026-01-01` to `2026-06-30`, rent `300`, deposit `500` | Tenancy id **4**, status PENDING |
+| 6 | `4` again, tenant `1`, space `3`, `2026-05-01` to `2026-09-01` | **Rejected**: room already rented (uses id 5) |
+| 7 | `11`, tenancy `4`, new status `2` (ACTIVE) | Tenancy status ACTIVE |
+| 8 | `5`, space `3`, type `1` (MOVE_IN), date `2026-01-02` | Inspection id **6** |
+| 9 | `9`, inspection `6`, answer `1` (acknowledge) | review ACKNOWLEDGED |
+| 10 | `6` three times: tenancy `4` with `300` (id **7**), `300` (id **8**), `200` (id **9**) | three PROPOSED deductions |
+| 11 | `8`, deduction `7`, accept | ACCEPTED |
+| 12 | `8`, deduction `8`, accept | **Rejected**: 600 would exceed the deposit 500. Stays PROPOSED |
+| 13 | `8`, deduction `9`, accept | ACCEPTED (300 + 200 = 500, allowed) |
+| 14 | `10`, deduction `8` | landlord rejects it: status REJECTED |
+| 15 | `7` | list everything, with the review status line under each inspection and deduction |
+| 16 | `0`, then look at data/users.csv, start again, `7` | the data is back |
+
+Try also (quick, shows validation): option `11` on an ENDED tenancy, or a bad date like `2026-13-40`.
+
+## Menu options
+1 add user, 2 add property, 3 add space, 4 add tenancy, 5 add inspection, 6 propose deduction, 7 list everything, 8 answer a deduction (accept or dispute), 9 answer an inspection (acknowledge or dispute), 10 landlord rejects a PROPOSED deduction, 11 change a tenancy status, 0 exit.
 
 ## 10 likely questions and short answers
 
@@ -76,3 +95,7 @@ The menu only reads input, validates it and prints. The rules live in the regist
 - What does try-with-resources do? (Closes the file automatically.)
 - What does the 1 to 0..* diamond line in the diagram mean? (The registry owns the collection.)
 - Why do objects link by id (tenantId, spaceId)? (Simple to store in CSV files, and matches a database later.)
+- What does printReview(Reviewable item) show? (One method works for an Inspection and for a DepositDeduction, because it only uses the interface. It does not need to know which class it got.)
+- Why can an ENDED tenancy not be changed? (Otherwise it could be reopened and overlap a newer tenancy of the same room. Ended is final.)
+- What is the difference between option 8 and option 10? (8: the tenant accepts or disputes a deduction. 10: the landlord withdraws a deduction that is still PROPOSED.)
+- Why does a REJECTED deduction show review status DISPUTED? (Reviewable has only three states. Rejected is mapped to "not agreed", the closest one.)
