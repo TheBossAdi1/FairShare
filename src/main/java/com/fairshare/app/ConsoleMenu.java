@@ -7,6 +7,9 @@ import java.util.Scanner;
 
 public class ConsoleMenu {
 
+    private static final int MAX_TEXT_LENGTH = 100;
+    private static final BigDecimal MAX_AMOUNT = new BigDecimal("1000000");
+
     private final FairShareRegistry registry;
     private final String currency;   // from the configuration, shown in money prompts
     private final Scanner scanner = new Scanner(System.in);
@@ -65,7 +68,7 @@ public class ConsoleMenu {
 
     private void addUser() {
         String name = readText("Full name: ");
-        String email = readText("Email: ");
+        String email = readEmail("Email: ");
         User user = new User(registry.generateId(), name, email);
         registry.addUser(user);
         System.out.println("Added: " + user);
@@ -225,9 +228,22 @@ public class ConsoleMenu {
                 System.out.println("This cannot be empty.");
             } else if (line.contains(",")) {
                 System.out.println("Commas are not allowed (they separate fields in the data file).");
+            } else if (line.length() > MAX_TEXT_LENGTH) {
+                System.out.println("Too long: at most " + MAX_TEXT_LENGTH + " characters.");
             } else {
                 return line;
             }
+        }
+    }
+
+    // text + the shape name@domain.ext (checked with a regular expression)
+    private String readEmail(String prompt) {
+        while (true) {
+            String email = readText(prompt);
+            if (email.matches("[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+([.][A-Za-z0-9-]+)*[.][A-Za-z]{2,}")) {
+                return email;
+            }
+            System.out.println("That is not a valid email (example: ana@mail.com).");
         }
     }
 
@@ -252,7 +268,11 @@ public class ConsoleMenu {
             System.out.print(prompt);
             String line = scanner.nextLine().trim();
             try {
-                return Long.parseLong(line);
+                long value = Long.parseLong(line);
+                if (value > 0) {
+                    return value;
+                }
+                System.out.println("An id must be a positive number.");
             } catch (NumberFormatException e) {
                 System.out.println("That is not a valid id.");
             }
@@ -265,10 +285,15 @@ public class ConsoleMenu {
             String line = scanner.nextLine().trim();
             try {
                 BigDecimal value = new BigDecimal(line);
-                if (value.compareTo(BigDecimal.ZERO) > 0) {
+                if (value.compareTo(BigDecimal.ZERO) <= 0) {
+                    System.out.println("The amount must be greater than zero.");
+                } else if (value.compareTo(MAX_AMOUNT) > 0) {
+                    System.out.println("The amount cannot be more than " + MAX_AMOUNT + ".");
+                } else if (value.stripTrailingZeros().scale() > 2) {
+                    System.out.println("Use at most 2 decimals (example: 150.50).");
+                } else {
                     return value;
                 }
-                System.out.println("The amount must be greater than zero.");
             } catch (NumberFormatException e) {
                 System.out.println("That is not a valid amount (example: 150.50).");
             }

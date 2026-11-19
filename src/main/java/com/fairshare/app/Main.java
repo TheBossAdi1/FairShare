@@ -1,5 +1,7 @@
 package com.fairshare.app;
 
+import java.util.NoSuchElementException;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -10,7 +12,12 @@ public class Main {
         FairShareFileStore store = new FairShareFileStore(config.getDataDirectory());
         store.load(registry);               // fill the registry from the files
         ConsoleMenu menu = new ConsoleMenu(registry, config.getDefaultCurrency());
-        menu.run();                         // returns when you choose 0
+        try {
+            menu.run();                     // returns when you choose 0
+        } catch (NoSuchElementException e) {
+            // the input ended (Ctrl+D): stop asking, but still save below
+            System.out.println("Input closed. Saving and exiting.");
+        }
         if (store.save(registry)) {
             System.out.println("Data saved.");
         }
