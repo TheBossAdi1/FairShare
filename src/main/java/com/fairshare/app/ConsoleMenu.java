@@ -20,7 +20,7 @@ public class ConsoleMenu {
         boolean running = true;
         while (running) {
             printMenu();
-            int choice = readInt("Choose an option: ", 0, 7);
+            int choice = readInt("Choose an option: ", 0, 8);
             if (choice == 1) {
                 addUser();
             } else if (choice == 2) {
@@ -33,9 +33,12 @@ public class ConsoleMenu {
                 addInspection();
             } else if (choice == 6) {
                 addDeduction();
+ 
             } else if (choice == 7) {
                 listAll();
-            } else {
+            } else if (choice == 8) {
+                respondToDeduction();
+            else {
                 running = false;
             }
         }
@@ -52,6 +55,7 @@ public class ConsoleMenu {
         System.out.println("5) Add inspection");
         System.out.println("6) Propose deposit deduction");
         System.out.println("7) List everything");
+        System.out.println("8) Answer a deduction (accept / dispute)");
         System.out.println("0) Exit");
     }
 
@@ -113,8 +117,13 @@ public class ConsoleMenu {
         BigDecimal deposit = readPositiveMoney("Agreed deposit: ");
         Tenancy tenancy = new Tenancy(registry.generateId(), tenantId, spaceId,
                 start, end, rent, deposit);
-        registry.addTenancy(tenancy);
-        System.out.println("Added: " + tenancy);
+        try {
+            registry.registerTenancy(tenancy);
+            System.out.println("Added: " + tenancy);
+        } catch (OverlappingTenancyException e) {
+            System.out.println("Rejected: " + e.getMessage());
+        }
+
     }
 
     private void addInspection() {
@@ -143,6 +152,40 @@ public class ConsoleMenu {
         registry.addDeduction(deduction);
         System.out.println("Added: " + deduction);
     }
+
+    private void respondToDeduction() {
+        long id = readLong("Deduction id: ");
+        DepositDeduction deduction = registry.findDeductionById(id);
+        if (deduction == null) {
+            System.out.println("No deduction with that id.");
+            return;
+        }
+        if (deduction.getStatus() != DeductionStatus.PROPOSED) {
+            System.out.println("Only PROPOSED deductions can be answered. This one is "
+                    + deduction.getStatus() + ".");
+            return;
+        }
+        if (registry.findTenancyById(deduction.getTenancyId()) == null) {
+            System.out.println("The tenancy of this deduction no longer exists.");
+            return;
+        }
+        System.out.println("1) Accept");
+        System.out.println("2) Dispute");
+        int choice = readInt("Answer: ", 1, 2);
+        if (choice == 1) {
+            try {
+                registry.acceptDeduction(deduction);
+                System.out.println("Accepted: " + deduction);
+            } catch (DepositLimitExceededException e) {
+                System.out.println("Rejected: " + e.getMessage());
+            }
+        } else {
+            String comment = readText("Comment: ");
+            deduction.dispute(comment);
+            System.out.println("Disputed: " + deduction);
+        }
+    }
+
 
     private void listAll() {
         System.out.println("--- Users ---");
